@@ -35,6 +35,11 @@ export const getReadableNameForPin = ({
 
   // Format pin description
   const mainPinName = port.name ? port.name : `Pin${port.pin_number}`
+  const isGenericPinName = /^pin\d+$/i.test(mainPinName)
+  const shouldIncludePinAliases =
+    isGenericPinName &&
+    component.ftype !== "simple_resistor" &&
+    component.ftype !== "simple_capacitor"
 
   const additionalPinLabels: string[] = []
 
@@ -46,8 +51,12 @@ export const getReadableNameForPin = ({
 
   for (const port_hint of port.port_hints ?? []) {
     if (port_hint === mainPinName) continue
+    if (port.pin_number !== undefined) {
+      if (port_hint === String(port.pin_number)) continue
+      if (port_hint.toLowerCase() === `pin${port.pin_number}`) continue
+    }
     const score = scorePhrase(port_hint)
-    if (score > 1) {
+    if (score > 1 || shouldIncludePinAliases) {
       additionalPinLabels.push(port_hint)
     }
   }
